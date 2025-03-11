@@ -1,12 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, ShoppingCart, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +26,17 @@ const Navbar = () => {
   }, []);
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logged out successfully');
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out');
+    }
+  };
   
   return (
     <header 
@@ -54,12 +69,27 @@ const Navbar = () => {
             <Link to="/cart" className="relative p-2">
               <ShoppingCart className="h-5 w-5 text-foreground/80 hover:text-primary transition-colors" />
             </Link>
-            <Button variant="ghost" className="text-foreground/80 hover:text-primary">
-              Sign In
-            </Button>
-            <Button>
-              Get Started
-            </Button>
+            
+            {currentUser ? (
+              <div className="flex items-center space-x-4">
+                <div className="text-sm font-medium">
+                  {currentUser.email}
+                </div>
+                <Button variant="ghost" onClick={handleLogout} className="flex items-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => navigate('/login')} className="text-foreground/80 hover:text-primary">
+                  Sign In
+                </Button>
+                <Button onClick={() => navigate('/register')}>
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
           
           <button className="md:hidden" onClick={toggleMenu}>
@@ -105,14 +135,27 @@ const Navbar = () => {
               >
                 Testimonials
               </Link>
-              <div className="flex items-center justify-between pt-4 border-t">
-                <Button variant="ghost" className="text-foreground/80">
-                  Sign In
-                </Button>
-                <Button>
-                  Get Started
-                </Button>
-              </div>
+              
+              {currentUser ? (
+                <div className="pt-4 border-t">
+                  <div className="text-sm font-medium mb-2">
+                    {currentUser.email}
+                  </div>
+                  <Button variant="ghost" onClick={handleLogout} className="flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-2 pt-4 border-t">
+                  <Button variant="ghost" onClick={() => { navigate('/login'); toggleMenu(); }}>
+                    Sign In
+                  </Button>
+                  <Button onClick={() => { navigate('/register'); toggleMenu(); }}>
+                    Get Started
+                  </Button>
+                </div>
+              )}
             </nav>
           </div>
         </div>
